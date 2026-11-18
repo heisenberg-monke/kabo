@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3] - Abstract Scene Base Class & Centralized Registration
+
+### Changed
+* **Abstract `Scene` Architecture**
+  * Converted `Scene` from an interface into an `abstract class` that stores `textProvider` and `choicesProvider` directly, providing overloaded constructors for static values and `GameContext`-driven lambdas while preserving `getText` and `getChoices`.
+  * Simplified `ExplorationScene` and `TitleScene` to extend `Scene` and delegate text and choice management to `super(...)`, removing duplicate provider fields.
+  * Updated `TitleScene` banner text to dynamically read `GameContext.version`.
+* **Centralized Scene Registration (`SceneManager`)**
+  * Moved `registerScenes()` from `Game` into `SceneManager` (called automatically upon initialization), allowing choice callbacks to invoke `switchTo(...)` directly without extra manager references.
+  * Simplified `Game.start()` to initialize core components and switch directly to `"title"`.
+  * Bumped `GameContext.version` to `v0.3`.
+
 ## [v0.2] - Scene Caching & Data-Driven Exploration
 
 ### Added

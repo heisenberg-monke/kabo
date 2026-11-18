@@ -2,45 +2,35 @@ package hm.kabo.scene.scenes;
 
 import java.util.List;
 
-import hm.kabo.core.GameContext;
 import hm.kabo.scene.Choice;
 import hm.kabo.scene.Scene;
 import hm.kabo.scene.SceneManager;
 
-public class TitleScene implements Scene
+public class TitleScene extends Scene
 {
-    private final SceneManager sceneManager;
-
-    public TitleScene(SceneManager sceneManager) {
-        this.sceneManager = sceneManager;
-    }
-
-    @Override 
-    public String getText(GameContext context)
+    public TitleScene(SceneManager sceneManager) 
     {
-        return 
-        """
-        ================================
-                MY TEXT RPG
-                Version 0.1
-        ================================
-        
-        A simple scene-based foundation.
-        
-        Choose an option below:
-
-        """;
-    }
-
-    @Override 
-    public List<Choice> getChoices(GameContext context)
-    {
-        return List.of
+        super
         (
-            new Choice("New Game", c -> sceneManager.switchTo("village_square")),
-            new Choice("Continue", null, false),
-            new Choice("Options", null, false),
-            new Choice("Quit", c -> System.exit(0))
+            context -> 
+            """
+            ================================
+                    MY TEXT RPG
+                    %s
+            ================================
+            
+            A simple scene-based foundation.
+            
+            Choose an option below:
+
+            """.formatted(context.version),
+            context -> List.of 
+            (
+                new Choice("New Game", c -> sceneManager.switchTo("village_square")),
+                new Choice("Continue", null, false),
+                new Choice("Options", null, false),
+                new Choice("Quit", c -> System.exit(0))
+            )
         );
     }
 }
