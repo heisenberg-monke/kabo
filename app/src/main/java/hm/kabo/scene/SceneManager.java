@@ -1,9 +1,15 @@
 package hm.kabo.scene;
 
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 
 import hm.kabo.core.GameContext;
 import hm.kabo.core.Renderer;
@@ -18,8 +24,33 @@ public class SceneManager
     private Scene currentScene;
     private Renderer renderer;
 
+    private String formatText(String rawText, GameContext c) {
+        return rawText.replace("{lookCounter}", String.valueOf(c.lookCounter));
+    }
+
+    private Choice buildChoice(SceneData.ChoiceData data)
+    {
+        var isEnabled = data.enabled() == null || data.enabled();
+        Consumer<GameContext> callback = null;
+
+        if(data.action() != null)
+        {
+            callback = switch(data.action())
+            {
+                case "INCREMENT_LOOK" -> c -> ++c.lookCounter;
+                default -> throw new IllegalArgumentException("Unknown action: " + data.action());
+            };
+        }
+        
+        else if(data.targetScene() != null)
+            callback = c -> switchTo(data.targetScene());
+
+        return new Choice(data.label(), callback, isEnabled);
+    }
+
     public SceneManager(GameContext context) {
         this.context = context;
+        registerScenes();
     }
 
     public void setRenderer(Renderer renderer) {
@@ -32,6 +63,31 @@ public class SceneManager
 
     public void registerScene(String id, Scene scene) {
         sceneCache.put(id, scene);
+    }
+
+    public void loadScenesFromJSON(String resourcePath)
+    {
+        var stream = getClass().getResourceAsStream(resourcePath);
+
+        if(stream == null) 
+            throw new IllegalStateException("Could not find scene resource: " + resourcePath);
+
+        try(var reader = new InputStreamReader(stream, StandardCharsets.UTF_8))
+        {
+            var listType = new TypeToken<List<SceneData>>(){}.getType();
+            List<SceneData> scenes = new Gson().fromJson(reader, listType);
+
+            for(var data : scenes)
+            {
+                var choices = data.choices().stream().map(this::buildChoice).toList();
+
+                registerScene(data.id(), new ExplorationScene(c -> formatText(data.text(), c), c -> choices));
+            }
+        }
+        
+        catch(Exception e) {
+            throw new RuntimeException("Failed to load scenes from " + resourcePath);
+        }
     }
 
     public void registerScenes()

@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.4] - Data-Driven JSON Scene Loading
+
+### Added
+* **JSON Scene Pipeline (`scenes.json`, `SceneData`)**
+  * Added Gson dependency (`com.google.code.gson:gson:2.11.0`) to `app/build.gradle`.
+  * Created `SceneData` and `ChoiceData` records to deserialize external scene definitions from `src/main/resources/scenes.json`.
+  * Added `SceneManager.loadScenesFromJson(String)` to parse JSON rooms, map string action keys (`INCREMENT_LOOK`) and `targetScene` IDs into `Choice` callbacks, and dynamically interpolate `{lookCounter}` placeholders in scene text.
+
+### Changed
+* Migrated `village_square` and `villager_chat` definitions out of hardcoded Java registrations in `SceneManager` and into `src/main/resources/scenes.json`.
+* Bumped `GameContext.version` to `v0.4`.
+
 ## [v0.3] - Abstract Scene Base Class & Centralized Registration
 
 ### Changed

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "village_square",
+    "text": "You stand in a quiet village square.\nThe wind carries the smell of bread from a nearby bakery.\n\nYou have looked around {lookCounter} times.",
+    "choices": [
+      {
+        "label": "Look around",
+        "action": "INCREMENT_LOOK",
+        "enabled": true
+      },
+      {
+        "label": "Talk to villager",
+        "targetScene": "villager_chat",
+        "enabled": true
+      },
+      {
+        "label": "Open inventory",
+        "enabled": false
+      },
+      {
+        "label": "Return to title",
+        "targetScene": "title",
+        "enabled": true
+      }
+    ]
+  },
+  {
+    "id": "villager_chat",
+    "text": "An elderly villager pauses near the stone well and nods at you.\n\n\"Fresh loaves just came out of the oven, traveler.\nStay safe if you head past the eastern woods.\"",
+    "choices": [
+      {
+        "label": "Step back to the square",
+        "targetScene": "village_square",
+        "enabled": true
+      }
+    ]
+  }
+]
