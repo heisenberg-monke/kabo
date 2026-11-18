@@ -1,0 +1,23 @@
+# Changelog
+
+## [v0.1] - Initial Release
+
+### Added
+
+* **Core Engine & State Management**
+* Implemented `Scene` interface with lifecycle hooks (`onEnter`, `onExit`) and state-driven text/choice rendering.
+* Implemented `SceneManager` to coordinate active scenes, player choices, and UI refreshes.
+* Added `GameContext` to maintain shared game state across scenes (including `lookCounter` and version metadata).
+* Created `Choice` action wrapper supporting `Consumer<GameContext>` callbacks and enabled/disabled states.
+
+* **JavaFX User Interface**
+* Built `Renderer` featuring a read-only, word-wrapped `TextArea` for narrative output and a dynamic 4-button `HBox` choice bar.
+* Configured `Game` JavaFX application entry point and `App` launcher class.
+
+* **Playable Scenes**
+* **Title Scene (`TitleScene`):** Added main menu with working **New Game** and **Quit** options, plus placeholder slots for **Continue** and **Options**.
+* **Test Exploration Scene (`TestExplorationScene`):** Added a village square scene with a working **Look around** interaction counter, **Return to title** navigation, and placeholder buttons for **Talk to villager** and **Open inventory**.
+
+### Fixed
+
+* Corrected an off-by-one bounds check (`index >= 0`) in `SceneManager.handleChoice` so the first choice button (`index 0`) triggers properly.
