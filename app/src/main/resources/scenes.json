@@ -14,10 +14,6 @@
         "enabled": true
       },
       {
-        "label": "Open inventory",
-        "enabled": false
-      },
-      {
         "label": "Return to title",
         "targetScene": "title",
         "enabled": true

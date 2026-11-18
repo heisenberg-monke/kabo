@@ -10,10 +10,9 @@ public class Game extends Application
     public void start(Stage stage)
     {
         var context = new GameContext();
-        var sceneManager = new SceneManager(context);
+        var sceneManager = new SceneManager(context, "/scenes.json");
         var renderer = new Renderer(stage, sceneManager);
 
-        sceneManager.registerScenes();
         sceneManager.switchTo("title");
         renderer.show();
     }

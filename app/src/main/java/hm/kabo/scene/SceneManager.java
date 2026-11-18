@@ -2,11 +2,11 @@ package hm.kabo.scene;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import hm.kabo.core.GameContext;
 import hm.kabo.core.Renderer;
 import hm.kabo.scene.scenes.ExplorationScene;
+import hm.kabo.scene.scenes.SplitListScene;
 import hm.kabo.scene.scenes.TitleScene;
 
 public class SceneManager 
@@ -22,6 +23,7 @@ public class SceneManager
     private final Map<String, Scene> sceneCache = new HashMap<>();
 
     private Scene currentScene;
+    private Scene previousScene;
     private Renderer renderer;
 
     private String formatText(String rawText, GameContext c) {
@@ -48,24 +50,11 @@ public class SceneManager
         return new Choice(data.label(), callback, isEnabled);
     }
 
-    public SceneManager(GameContext context) {
-        this.context = context;
-        registerScenes();
-    }
-
-    public void setRenderer(Renderer renderer) {
-        this.renderer = renderer;
-    }
-
-    public Scene getOrCreate(String id, Supplier<Scene> factory) {
-        return sceneCache.computeIfAbsent(id, k -> factory.get());
-    }
-
-    public void registerScene(String id, Scene scene) {
+    private void registerScene(String id, Scene scene) {
         sceneCache.put(id, scene);
     }
 
-    public void loadScenesFromJSON(String resourcePath)
+    private void loadScenesFromJSON(String resourcePath)
     {
         var stream = getClass().getResourceAsStream(resourcePath);
 
@@ -86,51 +75,87 @@ public class SceneManager
         }
         
         catch(Exception e) {
-            throw new RuntimeException("Failed to load scenes from " + resourcePath);
+            throw new RuntimeException("Failed to load scenes from " + resourcePath, e);
         }
     }
 
-    public void registerScenes()
+    private void registerScenes(String resourcePath)
     {
+        loadScenesFromJSON(resourcePath);
+
         registerScene("title", new TitleScene(this));
 
-        registerScene("village_square", new ExplorationScene
+        registerScene("inventory", new SplitListScene 
         (
-            context -> """
-                You stand in a quiet village square.
-                The wind carries the smell of bread from a nearby bakery.
+            "INVENTORY",
+            "Your bag is empty.",
+            c -> 
+            {
+                var tabs = new ArrayList<SplitListScene.TabEntry>();
 
-                You have looked around %d times.
-            """.formatted(context.lookCounter),
+                tabs.add(new SplitListScene.TabEntry
+                (
+                    "All",
+                    ctx -> ctx.getItems("All").stream().map(item -> new SplitListScene.ListEntry
+                    (
+                        item.name(),
+                        item.description(),
+                        null
+                    )).toList()
+                ));
 
-            context -> List.of
-            (
-                new Choice("Look around", c -> ++c.lookCounter),
-                new Choice("Talk to villager", c -> switchTo("villager_chat")),
-                new Choice("Open inventory", null, false),
-                new Choice("Return to title", c -> switchTo("title"))
-            )
+                for(String category : c.inventory.keySet())
+                    tabs.add(new SplitListScene.TabEntry
+                    (
+                        category,
+                        ctx -> ctx.getItems(category).stream().map(item -> new SplitListScene.ListEntry
+                        (
+                            item.name(),
+                            item.description(),
+                            null
+                        )).toList()
+                    ));
+
+                return tabs;
+            }
         ));
 
-        registerScene("villager_chat", new ExplorationScene
+        registerScene("options", new SplitListScene
         (
-            """
-            An elderly villager pauses near the stone well and nods at you.
-            
-            "Fresh loaves just came out of the oven, traveller.
-            Stay safe if you head past the eastern woods."
-            """,
-            List.of
-            (
-                new Choice("Step back to the square", c -> switchTo("village_square"))
+            "OPTIONS", 
+            "No options available.", 
+            c -> List.of (
+                new SplitListScene.TabEntry
+                (
+                    "General",
+                    ctx -> List.of(new SplitListScene.ListEntry
+                    (
+                        "Return to Title Screen",
+                        "Exit your current session and return to the main title menu.",
+                        context -> switchTo("title")
+                    ))
+                )
             )
         ));
+    }
+
+    public SceneManager(GameContext context, String resourcePath) 
+    {
+        this.context = context;
+        registerScenes(resourcePath);
+    }
+
+    public void setRenderer(Renderer renderer) {
+        this.renderer = renderer;
     }
 
     public void switchTo(Scene scene)
     {
         if(currentScene != null)
             currentScene.onExit(context);
+
+        if (scene == sceneCache.get("title"))
+            previousScene = null;
 
         currentScene = scene;
 
@@ -151,10 +176,6 @@ public class SceneManager
         switchTo(scene);
     }
 
-    public void switchTo(String id, Supplier<Scene> factory) {
-        switchTo(getOrCreate(id, factory));
-    }
-
     public void clearCache() {
         sceneCache.clear();
     }
@@ -167,19 +188,59 @@ public class SceneManager
         return context;
     }
 
-    public void handleChoice(int index)
+    public boolean isOverlayActive() {
+        return currentScene instanceof SplitListScene;
+    }
+
+    public boolean isOnTitle() {
+        return currentScene == sceneCache.get("title");
+    }
+
+    public boolean handleChoice(int index)
     {
         if(currentScene == null)
-            return;
+            return false;
 
         var choices = currentScene.getChoices(context);
 
-        if(index >= 0 && index < choices.size())
+        if(index >= 0 && index < choices.size() && choices.get(index).isEnabled())
         {
             choices.get(index).execute(context);
 
             if(renderer != null)
                 renderer.refresh();
+
+            return true;
         }
+        
+        return false;
+    }
+
+    public void returnToPrevious()
+    {
+        if(previousScene != null)
+        {
+            var target = previousScene;
+
+            previousScene = null;
+            switchTo(target);
+        }
+
+        else 
+            switchTo("title");
+    }
+
+    public void openOverlay(String id)
+    {
+        if(currentScene == sceneCache.get(id))
+        {
+            returnToPrevious();
+            return;
+        }
+
+        if(currentScene != null && !(currentScene instanceof SplitListScene))
+            previousScene = currentScene;
+
+        switchTo(id);
     }
 }

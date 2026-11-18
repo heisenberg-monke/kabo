@@ -1,5 +1,24 @@
 # Changelog
 
+## [v0.5] - Categorized Inventory, Options & Full Keyboard/Mouse Navigation
+
+### Added
+* **Categorized Item & Inventory System (`Item`, `GameContext`)**
+  * Created `Item` record (`id`, `name`, `description`, `category`) and implemented `GameContext.inventory` as a `LinkedHashMap<String, List<Item>>` with `addItem(Item)` and `getItems(String)` helpers (including an `"All"` aggregate view and starter items).
+* **Tabbed Split-Pane Menus (`SplitListScene`)**
+  * Added `SplitListScene` extending `Scene` to render a dual-pane layout (items/options list on the left, live description preview on the right) with dynamic top category tabs shared by **Inventory** and **Options**.
+  * Generated inventory tabs dynamically from `GameContext.inventory.keySet()` and added an **Options** menu with a `"General"` tab containing a **Return to Title Screen** action.
+* **Overlay Navigation & History (`SceneManager`)**
+  * Added `previousScene` tracking, `openOverlay(String)`, `returnToPrevious()`, and boolean feedback from `handleChoice(int)` so toggling Inventory or Options returns directly to the prior gameplay scene.
+* **Persistent Utility Bar & Full Input Support (`Renderer`)**
+  * Added persistent **Inventory [I]** and **Options [Esc]** buttons below the 4-choice action bar (disabled on the Title Screen, and collapsing the choice bar automatically while inside overlays).
+  * Added full keyboard controls: `1`–`4` (and Numpad `1`–`4`) for direct choice selection, `Arrow` keys to navigate choices or scroll list entries, `Tab` / `Shift + Tab` to cycle category tabs, `Enter` / `Space` to confirm selections, `I` to toggle Inventory, and `Esc` to toggle Options.
+  * Added standard mouse interaction in list menus: single-click to highlight and preview descriptions, and primary double-click to execute selected items or options.
+
+### Changed
+* Removed the disabled `"Open inventory"` placeholder choice from `village_square` in `scenes.json` in favor of the dedicated bottom bar button and `I` shortcut.
+* Bumped `GameContext.version` to `v0.5`.
+
 ## [v0.4] - Data-Driven JSON Scene Loading
 
 ### Added
