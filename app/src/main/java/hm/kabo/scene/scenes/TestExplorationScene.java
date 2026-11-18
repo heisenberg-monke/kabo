@@ -35,7 +35,7 @@ public class TestExplorationScene implements Scene
             new Choice("Look around", c -> ++c.lookCounter),
             new Choice("Talk to villager", null, false),
             new Choice("Open inventory", null, false),
-            new Choice("Return to title", c -> sceneManager.switchTo(new TitleScene(sceneManager)))
+            new Choice("Return to title", c -> sceneManager.switchTo("title", () -> new TitleScene(sceneManager)))
         );
     }
 

@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.2] - Scene Caching & Data-Driven Exploration
+
+### Added
+* **Scene Caching & ID Routing (`SceneManager`)**
+  * Added `HashMap<String, Scene>` scene cache with `getOrCreate(String, Supplier<Scene>)`, `registerScene(String, Scene)`, `clearCache()`, and ID-based `switchTo(String)` navigation.
+  * Wired up `Scene.onEnter(GameContext)` lifecycle hook during scene transitions.
+* **Reusable `ExplorationScene` Class**
+  * Created a generic, data-driven `ExplorationScene` supporting both static text/choices and context-aware providers (`Function<GameContext, ...>`), preparing the engine for external JSON scene loading.
+* **New Dialogue Scene (`"villager_chat"`)**
+  * Enabled the **Talk to villager** choice in the village square, leading to an interactive villager encounter with navigation back to `"village_square"`.
+
+### Changed
+* Replaced the hardcoded `TestExplorationScene` with two pre-registered `ExplorationScene` instances (`"village_square"` and `"villager_chat"`) initialized on startup in `Game`.
+* Updated `TitleScene` and exploration choices to transition strictly by string scene ID rather than instantiating new `Scene` objects on every switch.
+* Bumped `GameContext.version` to `v0.2`.
+
+
 ## [v0.1] - Initial Release
 
 ### Added

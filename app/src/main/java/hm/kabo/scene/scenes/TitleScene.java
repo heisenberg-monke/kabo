@@ -37,7 +37,7 @@ public class TitleScene implements Scene
     {
         return List.of
         (
-            new Choice("New Game", c -> sceneManager.switchTo(new TestExplorationScene(sceneManager))),
+            new Choice("New Game", c -> sceneManager.switchTo("village_square")),
             new Choice("Continue", null, false),
             new Choice("Options", null, false),
             new Choice("Quit", c -> System.exit(0))

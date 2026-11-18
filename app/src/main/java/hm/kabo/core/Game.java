@@ -1,7 +1,6 @@
 package hm.kabo.core;
 
 import hm.kabo.scene.SceneManager;
-import hm.kabo.scene.scenes.TitleScene;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -14,7 +13,8 @@ public class Game extends Application
         var sceneManager = new SceneManager(context);
         var renderer = new Renderer(stage, sceneManager);
 
-        sceneManager.switchTo(new TitleScene(sceneManager));
+        sceneManager.registerScenes();
+        sceneManager.switchTo("title");
         renderer.show();
     }
 }
