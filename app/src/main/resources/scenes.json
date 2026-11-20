@@ -14,23 +14,71 @@
         "enabled": true
       },
       {
-        "label": "Head toward the eastern woods",
-        "targetScene": "eastern_woods_ambush",
+        "label": "Visit the village bakery",
+        "targetScene": "village_bakery",
         "enabled": true
       },
       {
-        "label": "Return to title",
-        "targetScene": "title",
+        "label": "Head toward the eastern woods",
+        "targetScene": "eastern_woods_ambush",
         "enabled": true
       }
     ]
   },
   {
     "id": "villager_chat",
-    "text": "An elderly villager pauses near the stone well and nods at you.\n\n\"Fresh loaves just came out of the oven, traveler.\nStay safe if you head past the eastern woods.\"",
+    "text": "An elderly villager pauses near the stone well and nods at you.\n\n\"Fresh loaves just came out of the oven at the bakery, traveler.\nStay safe if you head past the eastern woods—goblins have been prowling near the old watchtower.\"",
+    "choices": [
+      {
+        "label": "Ask about the watchtower",
+        "targetScene": "villager_watchtower_lore",
+        "enabled": true
+      },
+      {
+        "label": "Step back to the square",
+        "targetScene": "village_square",
+        "enabled": true
+      }
+    ]
+  },
+  {
+    "id": "villager_watchtower_lore",
+    "text": "The villager lowers their voice and glances toward the treeline.\n\n\"That tower has stood empty since the old border skirmishes. Folk say the cellar door is rusted shut, though nobody dares stay after sundown to check.\"",
     "choices": [
       {
         "label": "Step back to the square",
+        "targetScene": "village_square",
+        "enabled": true
+      }
+    ]
+  },
+  {
+    "id": "village_bakery",
+    "text": "Warmth radiates from a brick hearth inside the cozy timber-framed bakery. Rows of golden sourdough loaves cool on wooden racks behind the counter, and the baker waves a flour-dusted hand in greeting.",
+    "choices": [
+      {
+        "label": "Chat with the baker",
+        "targetScene": "baker_chat",
+        "enabled": true
+      },
+      {
+        "label": "Return to the village square",
+        "targetScene": "village_square",
+        "enabled": true
+      }
+    ]
+  },
+  {
+    "id": "baker_chat",
+    "text": "\"If you're venturing beyond the eastern woods, keep your wits sharp,\" the baker warns while wiping down the counter. \"A hearty meal makes all the difference when you're nursing bruises from the road.\"",
+    "choices": [
+      {
+        "label": "Back to the bakery counter",
+        "targetScene": "village_bakery",
+        "enabled": true
+      },
+      {
+        "label": "Return to the village square",
         "targetScene": "village_square",
         "enabled": true
       }
@@ -45,11 +93,59 @@
   },
   {
     "id": "eastern_woods",
-    "text": "Dappled sunlight filters through the tall pines of the eastern woods.\nThe forest path is quiet now, with only the scattered gear of defeated goblins left behind.",
+    "text": "Dappled sunlight filters through the tall pines of the eastern woods.\nThe forest path is quiet now, winding deeper toward a crumbling stone watchtower on a mossy ridge.",
     "choices": [
+      {
+        "label": "Follow the ridge path to the old watchtower",
+        "targetScene": "old_watchtower",
+        "enabled": true
+      },
       {
         "label": "Return to the village square",
         "targetScene": "village_square",
+        "enabled": true
+      }
+    ]
+  },
+  {
+    "id": "old_watchtower",
+    "text": "Ivy creeps up the cracked masonry of an abandoned stone watchtower. A weathered wooden sign hangs crookedly beside a heavy, rusted cellar hatch half-buried in dead leaves.",
+    "choices": [
+      {
+        "label": "Inspect the rusted cellar hatch",
+        "targetScene": "watchtower_cellar_door",
+        "enabled": true
+      },
+      {
+        "label": "Climb the crumbling spiral stairs",
+        "targetScene": "watchtower_lookout",
+        "enabled": true
+      },
+      {
+        "label": "Head back into the eastern woods",
+        "targetScene": "eastern_woods",
+        "enabled": true
+      }
+    ]
+  },
+  {
+    "id": "watchtower_cellar_door",
+    "text": "Thick iron hinges groan slightly as you tug at the ring handle. A heavy, corroded keyhole sits dead-center in the oak planks—clearly locked tight from the inside.",
+    "choices": [
+      {
+        "label": "Step back to the watchtower courtyard",
+        "targetScene": "old_watchtower",
+        "enabled": true
+      }
+    ]
+  },
+  {
+    "id": "watchtower_lookout",
+    "text": "From the wind-swept battlement at the top of the tower, you can see the smoke of the village bakery curling above the treetops to the west and dark, jagged hills stretching across the eastern horizon.",
+    "choices": [
+      {
+        "label": "Descend back to the courtyard",
+        "targetScene": "old_watchtower",
         "enabled": true
       }
     ]

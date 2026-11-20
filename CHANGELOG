@@ -1,5 +1,27 @@
 # Changelog
 
+## [v0.9] - Encrypted Save/Load System, Confirmation Prompts & World Expansion
+
+### Added
+* **Encrypted Save & Load Architecture (`SaveData`, `SaveManager`, `GameContext`)**
+  * Created `SaveData` to serialize pure-data snapshots of player stats (`maxHP`, `hp`, `attack`, `defense`, `speed`, `xp`, `gold`), `lookCounter`, `currentSceneId`, inventory item IDs, remaining alive enemies, and `replacedScenes`.
+  * Implemented `SaveManager` to store and read multiple save slots under `./saves/*.sav` using **AES-GCM (`AES/GCM/NoPadding`)** encryption with randomized 12-byte IVs.
+  * Added an item template registry (`registerItemTemplate`, `createItemById`) and `replacedScenes` tracking in `GameContext` so loaded saves reconstruct full `Item` instances (with their `ItemEffect`s) and keep defeated battle encounters cleared.
+* **Save/Load Split Screens & Confirmation Flows (`SceneManager`)**
+  * Registered `"save_game"` (`+ Create New Save` and existing save slot entries) and `"load_game"` as `SplitListScene` overlays.
+  * Added `ConfirmationScene` (`ExplorationScene` subclass) and `showConfirmation` / `confirmQuit` helpers to require explicit **Confirm / Cancel** prompts when overwriting a save slot, loading a save mid-session, returning to the title screen, or quitting the game.
+* **Expanded World & Dialogue (`scenes.json`)**
+  * Added `village_bakery`, `baker_chat`, `villager_watchtower_lore`, `old_watchtower`, `watchtower_cellar_door`, and `watchtower_lookout` scenes to expand village exploration and post-woods progression.
+
+### Changed
+* **Title Screen & Options Navigation (`TitleScene`, `SceneManager`, `scenes.json`)**
+  * Updated `TitleScene` to display **New Game**, **Continue** (opens the `"load_game"` overlay), **Options**, and **Quit** (with confirmation), and removed `"Return to title"` from `village_square`.
+  * Updated the `"options"` menu to include **Save Game**, **Load Game**, **Return to Title**, and **Quit** (hiding **Save Game** and **Return to Title** when opened from the title screen).
+* **Layout & Input Refinements (`Renderer`, `InputManager`)**
+  * Updated `Renderer` to hide `utilityBox` (`Inventory` and `Options` buttons) on the title screen and during confirmation prompts, and centered active choice buttons horizontally relative to the window.
+  * Bound `F5` to open `"save_game"` (blocked on title, in battle, and during confirmations), bound `F7` to open `"load_game"`, refactored `Esc` to close active overlays before opening `"options"`, and guarded shortcuts while confirmation prompts are active.
+  * Bumped `GameContext.version` to `v0.9`.
+
 ## [v0.8] - Functional Item Effects, In-Battle Inventory & Full New Game Reset
 
 ### Added

@@ -29,7 +29,7 @@ public class Renderer
     
     private TextArea textArea, itemDescriptionArea;
     private VBox splitContainer;
-    private HBox tabBar, choiceBox;
+    private HBox tabBar, choiceBox, utilityBox;
     private SplitPane splitView;
     private ListView<String> itemListView;
 
@@ -47,9 +47,10 @@ public class Renderer
         splitContainer = new VBox(tabBar, splitView);
         inventoryButton = new Button("Inventory [I]");
         optionsButton = new Button("Options [Esc]");
+        utilityBox = new HBox(10, inventoryButton, optionsButton);
 
         var centerStack = new StackPane(textArea, splitContainer);
-        var utilityBox = new HBox(10, inventoryButton, optionsButton);
+        
         var bottomContainer = new VBox(8, choiceBox, utilityBox);
         var root = new BorderPane();
         var fxScene = new Scene(root, 800, 520);
@@ -94,10 +95,8 @@ public class Renderer
 
             choiceButtons[i] = new Button();
 
-            choiceButtons[i].setMaxWidth(Double.MAX_VALUE);
+            choiceButtons[i].setMinWidth(150);
             choiceButtons[i].setFocusTraversable(false);
-
-            HBox.setHgrow(choiceButtons[i], Priority.ALWAYS);
 
             choiceButtons[i].setOnAction(e -> 
                 inputManager.onChoiceClicked(index)
@@ -244,6 +243,10 @@ public class Renderer
         var choices = current.getChoices(context);
         var onTitle = sceneManager.isOnTitle();
         var hashChoices = !choices.isEmpty();
+        boolean showUtilityBox = !onTitle && !sceneManager.isConfirmationActive();
+
+        utilityBox.setVisible(showUtilityBox);
+        utilityBox.setManaged(showUtilityBox);
 
         inventoryButton.setDisable(onTitle);
         optionsButton.setDisable(onTitle);
@@ -277,6 +280,7 @@ public class Renderer
                 choiceButtons[i].setText((i + 1) + ". " + c.getLabel());
                 choiceButtons[i].setDisable(!c.isEnabled());
                 choiceButtons[i].setVisible(true);
+                choiceButtons[i].setManaged(true);
             }
 
             else 
@@ -284,6 +288,7 @@ public class Renderer
                 choiceButtons[i].setText("");
                 choiceButtons[i].setDisable(true);
                 choiceButtons[i].setVisible(false);
+                choiceButtons[i].setManaged(false);
             }
         }
 

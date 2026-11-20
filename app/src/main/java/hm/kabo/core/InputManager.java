@@ -98,8 +98,11 @@ public class InputManager
 
             if(action != null)
             {
+                var before = sceneManager.getCurrentScene();
                 action.accept(sceneManager.getContext());
-                renderer.refresh();
+
+                if (sceneManager.getCurrentScene() == before && !(before instanceof SplitListScene))
+                    renderer.refresh();
             }
         }
     }
@@ -168,7 +171,28 @@ public class InputManager
     {
         var code = event.getCode();
 
-        if(!sceneManager.isOnTitle())
+        if (code == KeyCode.ESCAPE && !sceneManager.isConfirmationActive())
+        {
+            if (sceneManager.isOverlayActive())
+                sceneManager.returnToPrevious();
+
+            else if (!sceneManager.isOnTitle())
+                sceneManager.openOverlay("options");
+
+            event.consume();
+
+            return;
+        }
+
+        if (code == KeyCode.F7 && !sceneManager.isConfirmationActive())
+        {
+            sceneManager.openOverlay("load_game");
+            event.consume();
+
+            return;
+        }
+
+        if(!sceneManager.isOnTitle() && !sceneManager.isConfirmationActive())
         {
             switch(code)
             {
@@ -180,9 +204,11 @@ public class InputManager
                     return;
                 }
 
-                case ESCAPE -> 
+                case F5 ->
                 {
-                    sceneManager.openOverlay("options");
+                    if (!sceneManager.isInBattle())
+                        sceneManager.openOverlay("save_game");
+
                     event.consume();
 
                     return;

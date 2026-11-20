@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import hm.kabo.core.GameContext;
 import hm.kabo.core.Renderer;
 import hm.kabo.items.Item;
+import hm.kabo.saves.SaveManager;
 import hm.kabo.scene.scenes.BattleScene;
 import hm.kabo.scene.scenes.ExplorationScene;
 import hm.kabo.scene.scenes.SplitListScene;
@@ -29,6 +30,9 @@ public class SceneManager
     private Scene previousScene;
     private Scene preBattleScene;
     private Renderer renderer;
+
+    private final SaveManager saveManager = new SaveManager();
+    private String currentGameplaySceneId = "village_square";
 
     private String formatText(String rawText, GameContext c) {
         return rawText.replace("{lookCounter}", String.valueOf(c.lookCounter));
@@ -106,6 +110,7 @@ public class SceneManager
             throw new IllegalArgumentException("No replacement scene registered with ID: " + replacementId);
 
         sceneCache.put(oldId, replacement);
+        context.replacedScenes.put(oldId, replacementId);
     }
 
     private SplitListScene.ListEntry buildInventoryEntry(Item item)
@@ -120,6 +125,16 @@ public class SceneManager
                 if (result != null && renderer != null)
                     renderer.setItemDescription(result);
             } : null
+        );
+    }
+
+    public void confirmQuit(String cancelSceneId)
+    {
+        showConfirmation
+        (
+            "Are you sure you want to quit the game?",
+            javafx.application.Platform::exit,
+            sceneCache.get(cancelSceneId)
         );
     }
 
@@ -176,20 +191,130 @@ public class SceneManager
 
         registerScene("options", new SplitListScene
         (
-            "OPTIONS", 
-            "No options available.", 
-            c -> List.of (
-                new SplitListScene.TabEntry
-                (
-                    "General",
-                    ctx -> List.of(new SplitListScene.ListEntry
+            "OPTIONS",
+            "No options available.",
+            c ->
+            {
+                var entries = new ArrayList<SplitListScene.ListEntry>();
+                boolean startedFromTitle = (previousScene == sceneCache.get("title"));
+
+                if (!startedFromTitle && !(previousScene instanceof BattleScene))
+                {
+                    entries.add(new SplitListScene.ListEntry
                     (
-                        "Return to Title Screen",
+                        "Save Game",
+                        "Save your current progress to a file.",
+                        ctx -> openOverlay("save_game")
+                    ));
+                }
+
+                entries.add(new SplitListScene.ListEntry
+                (
+                    "Load Game",
+                    "Load a previously saved game.",
+                    ctx -> openOverlay("load_game")
+                ));
+
+                if (!startedFromTitle)
+                {
+                    entries.add(new SplitListScene.ListEntry
+                    (
+                        "Return to Title",
                         "Exit your current session and return to the main title menu.",
-                        context -> switchTo("title")
-                    ))
-                )
-            )
+                        ctx -> showConfirmation
+                        (
+                            "Return to the title screen?\nAny unsaved progress in your current session will be lost.",
+                            () -> switchTo("title"),
+                            sceneCache.get("options")
+                        )
+                    ));
+                }
+
+                entries.add(new SplitListScene.ListEntry
+                (
+                    "Quit",
+                    "Exit the game.",
+                    ctx -> confirmQuit("options")
+                ));
+
+                return List.of(new SplitListScene.TabEntry("General", ctx -> entries));
+            }
+        ));
+
+        registerScene("save_game", new SplitListScene
+        (
+            "SAVE GAME",
+            "No save files found.",
+            c ->
+            {
+                var entries = new ArrayList<SplitListScene.ListEntry>();
+
+                entries.add(new SplitListScene.ListEntry
+                (
+                    "+ Create New Save",
+                    "Save your current progress into a brand-new save slot.",
+                    ctx ->
+                    {
+                        saveManager.saveNewSlot(ctx, currentGameplaySceneId);
+                        returnToPrevious();
+                    }
+                ));
+
+                for (var slot : saveManager.listSaves())
+                {
+                    entries.add(new SplitListScene.ListEntry
+                    (
+                        slot.slotName(),
+                        "Scene: %s\nSaved: %s\n\nSelect to overwrite this save slot.".formatted(slot.currentSceneId(), slot.timestamp()),
+                        ctx -> showConfirmation
+                        (
+                            "Overwrite %s (%s)?\nAny previous progress in this slot will be lost.".formatted(slot.slotName(), slot.timestamp()),
+                            () ->
+                            {
+                                saveManager.saveToFile(slot.fileName(), slot.slotName(), ctx, currentGameplaySceneId);
+                                returnToPrevious();
+                            },
+                            sceneCache.get("save_game")
+                        )
+                    ));
+                }
+
+                return List.of(new SplitListScene.TabEntry("Saves", ctx -> entries));
+            }
+        ));
+
+        registerScene("load_game", new SplitListScene
+        (
+            "LOAD GAME",
+            "No save files found.",
+            c ->
+            {
+                var entries = new ArrayList<SplitListScene.ListEntry>();
+                boolean startedFromTitle = (previousScene == sceneCache.get("title"));
+
+                for (var slot : saveManager.listSaves())
+                {
+                    entries.add(new SplitListScene.ListEntry
+                    (
+                        slot.slotName(),
+                        "Scene: %s\nSaved: %s".formatted(slot.currentSceneId(), slot.timestamp()),
+                        ctx ->
+                        {
+                            if (startedFromTitle)
+                                saveManager.loadFromFile(slot.fileName(), ctx, this);
+                            else
+                                showConfirmation
+                                (
+                                    "Load %s (%s)?\nAny unsaved progress in your current session will be lost.".formatted(slot.slotName(), slot.timestamp()),
+                                    () -> saveManager.loadFromFile(slot.fileName(), ctx, this),
+                                    sceneCache.get("load_game")
+                                );
+                        }
+                    ));
+                }
+
+                return List.of(new SplitListScene.TabEntry("Saves", ctx -> entries));
+            }
         ));
     }
 
@@ -251,7 +376,48 @@ public class SceneManager
         if(scene == null)
             throw new IllegalArgumentException("No scene registered with ID: " + id);
 
+        if (!(scene instanceof SplitListScene) && !"title".equals(id) && !"confirm".equals(id))
+            currentGameplaySceneId = id;
+
         switchTo(scene);
+    }
+
+    public boolean hasAnySaves() {
+        return saveManager.hasAnySaves();
+    }
+
+    public void prepareForLoad()
+    {
+        context.reset();
+        clearCache();
+        previousScene = null;
+        preBattleScene = null;
+        registerScenes(sceneResourcePath);
+    }
+
+    private static class ConfirmationScene extends ExplorationScene
+    {
+        public ConfirmationScene(String text, List<Choice> choices) {
+            super(c -> text, c -> choices);
+        }
+    }
+
+    public boolean isConfirmationActive() {
+        return currentScene instanceof ConfirmationScene;
+    }
+
+    private void showConfirmation(String promptText, Runnable onConfirm, Scene cancelTarget)
+    {
+        var confirmScene = new ConfirmationScene
+        (
+            promptText,
+            List.of
+            (
+                new Choice("Confirm", ctx -> onConfirm.run()),
+                new Choice("Cancel", ctx -> switchTo(cancelTarget))
+            )
+        );
+        switchTo(confirmScene);
     }
 
     public void clearCache() {

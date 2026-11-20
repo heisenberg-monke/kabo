@@ -5,6 +5,7 @@ import java.util.List;
 import hm.kabo.scene.Choice;
 import hm.kabo.scene.Scene;
 import hm.kabo.scene.SceneManager;
+import javafx.application.Platform;
 
 public class TitleScene extends Scene
 {
@@ -27,9 +28,9 @@ public class TitleScene extends Scene
             context -> List.of 
             (
                 new Choice("New Game", c -> sceneManager.startNewGame()),
-                new Choice("Continue", null, false),
-                new Choice("Options", null, false),
-                new Choice("Quit", c -> System.exit(0))
+                new Choice("Continue", c -> sceneManager.openOverlay("load_game")),
+                new Choice("Options", c -> sceneManager.openOverlay("options")),
+                new Choice("Quit", c -> sceneManager.confirmQuit("title"))
             )
         );
     }

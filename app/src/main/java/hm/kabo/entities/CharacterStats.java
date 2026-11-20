@@ -26,6 +26,10 @@ public class CharacterStats
         return actual;
     }
 
+    public void setHP(int hp) {
+        this.hp = hp;
+    }
+
     public int heal(int amount)
     {
         int before = hp;
