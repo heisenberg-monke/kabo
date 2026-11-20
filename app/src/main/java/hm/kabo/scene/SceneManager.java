@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 
 import hm.kabo.core.GameContext;
 import hm.kabo.core.Renderer;
+import hm.kabo.items.Item;
 import hm.kabo.scene.scenes.BattleScene;
 import hm.kabo.scene.scenes.ExplorationScene;
 import hm.kabo.scene.scenes.SplitListScene;
@@ -20,11 +21,13 @@ import hm.kabo.scene.scenes.TitleScene;
 
 public class SceneManager 
 {
+    private final String sceneResourcePath;
     private final GameContext context;
     private final Map<String, Scene> sceneCache = new HashMap<>();
 
     private Scene currentScene;
     private Scene previousScene;
+    private Scene preBattleScene;
     private Renderer renderer;
 
     private String formatText(String rawText, GameContext c) {
@@ -105,6 +108,21 @@ public class SceneManager
         sceneCache.put(oldId, replacement);
     }
 
+    private SplitListScene.ListEntry buildInventoryEntry(Item item)
+    {
+        return new SplitListScene.ListEntry
+        (
+            item.name(),
+            item.description(),
+            item.isUsable() ? gameCtx ->
+            {
+                String result = gameCtx.useItem(item);
+                if (result != null && renderer != null)
+                    renderer.setItemDescription(result);
+            } : null
+        );
+    }
+
     private void registerScenes(String resourcePath)
     {
         loadScenesFromJSON(resourcePath);
@@ -119,27 +137,37 @@ public class SceneManager
             {
                 var tabs = new ArrayList<SplitListScene.TabEntry>();
 
-                tabs.add(new SplitListScene.TabEntry
-                (
-                    "All",
-                    ctx -> ctx.getItems("All").stream().map(item -> new SplitListScene.ListEntry
-                    (
-                        item.name(),
-                        item.description(),
-                        null
-                    )).toList()
-                ));
-
-                for(String category : c.inventory.keySet())
+                if (previousScene instanceof BattleScene battle)
+                {
                     tabs.add(new SplitListScene.TabEntry
                     (
-                        category,
-                        ctx -> ctx.getItems(category).stream().map(item -> new SplitListScene.ListEntry
+                        "Consumables",
+                        ctx -> ctx.getItems("Consumables").stream().map(item -> new SplitListScene.ListEntry
                         (
                             item.name(),
                             item.description(),
-                            null
+                            gameCtx ->
+                            {
+                                String result = gameCtx.useItem(item);
+                                if (result != null)
+                                    battle.onItemUsed(gameCtx, result);
+                            }
                         )).toList()
+                    ));
+                    return tabs;
+                }
+
+                tabs.add(new SplitListScene.TabEntry
+                (
+                    "All",
+                    ctx -> ctx.getItems("All").stream().map(item -> buildInventoryEntry(item)).toList()
+                ));
+
+                for (String category : c.inventory.keySet())
+                    tabs.add(new SplitListScene.TabEntry
+                    (
+                        category,
+                        ctx -> ctx.getItems(category).stream().map(item -> buildInventoryEntry(item)).toList()
                     ));
 
                 return tabs;
@@ -167,12 +195,31 @@ public class SceneManager
 
     public SceneManager(GameContext context, String resourcePath) 
     {
+        this.sceneResourcePath = resourcePath;
         this.context = context;
         registerScenes(resourcePath);
     }
 
+    public void startNewGame()
+    {
+        context.reset();
+        clearCache();
+        previousScene = null;
+        preBattleScene = null;
+        registerScenes(sceneResourcePath);
+        switchTo("village_square");
+    }
+
     public void setRenderer(Renderer renderer) {
         this.renderer = renderer;
+    }
+
+    public boolean isInBattle() {
+        return currentScene instanceof BattleScene;
+    }
+
+    public BattleScene getActiveBattle() {
+        return currentScene instanceof BattleScene battle ? battle : null;
     }
 
     public void switchTo(Scene scene)
@@ -181,10 +228,12 @@ public class SceneManager
             currentScene.onExit(context);
 
         if (scene == sceneCache.get("title"))
+        {
             previousScene = null;
-
+            preBattleScene = null;
+        }
         else if (scene instanceof BattleScene && currentScene != null && !(currentScene instanceof SplitListScene))
-            previousScene = currentScene;
+            preBattleScene = currentScene;
 
         currentScene = scene;
 
@@ -247,15 +296,22 @@ public class SceneManager
 
     public void returnToPrevious()
     {
-        if(previousScene != null)
+        if (previousScene != null)
         {
             var target = previousScene;
 
             previousScene = null;
             switchTo(target);
         }
+        else if (preBattleScene != null)
+        {
+            var target = preBattleScene;
 
-        else 
+            preBattleScene = null;
+            switchTo(target);
+        }
+
+        else
             switchTo("title");
     }
 

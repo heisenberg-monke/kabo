@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.8] - Functional Item Effects, In-Battle Inventory & Full New Game Reset
+
+### Added
+* **Modular Item Effects (`ItemEffect` & `Item.isUsable`)**
+  * Created functional interface `ItemEffect` with built-in factory helpers (`heal`, `buffAttack`, `buffDefense`, and `none`) so items apply dynamic stat changes upon consumption.
+  * Updated `Item` to hold an `ItemEffect` and expose `isUsable()` to distinguish consumable items from equipment and key items.
+* **Centralized Item Consumption (`GameContext.useItem`)**
+  * Added `GameContext.useItem(Item)` to validate usability, remove the consumed item from `inventory`, apply its effect to the active `Player`, and return the formatted combat/status message from any scene.
+* **Full Session Reset (`GameContext.reset`, `EntityManager.reload`, `SceneManager.startNewGame`)**
+  * Added `EntityManager.reload()` to re-instantiate all enemies fresh from `/enemies.json`.
+  * Added `GameContext.reset()` to restore `lookCounter`, starting inventory items, and a fresh `Player` instance.
+  * Added `SceneManager.startNewGame()` (wired to `TitleScene`'s **New Game** choice) to reset `GameContext`, clear `sceneCache`, and reload all scenes from `/scenes.json` so defeated `BattleScene` encounters are restored.
+
+### Changed
+* **Context-Aware Inventory Overlay (`SceneManager` & `BattleScene`)**
+  * Updated `BattleScene`'s **Use Item** choice to open the `"inventory"` overlay (disabled when `Consumables` is empty) and added `BattleScene.onItemUsed` to log item results and advance to the enemy turn phase.
+  * Configured the `"inventory"` `SplitListScene` to render **only** the `Consumables` tab during active battles while allowing usable items to be consumed both inside and outside combat.
+  * Updated `BattleScene.onEnter` and `SceneManager` (`preBattleScene` tracking) so opening or closing overlays mid-battle preserves ongoing combat state and retreat destinations.
+  * Bumped `GameContext.version` to `v0.8`.
+
 ## [v0.7] - Entity Hierarchy & Turn-Based Combat System
 
 ### Added

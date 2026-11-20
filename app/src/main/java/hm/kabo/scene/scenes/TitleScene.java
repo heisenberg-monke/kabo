@@ -26,7 +26,7 @@ public class TitleScene extends Scene
             """.formatted(context.version),
             context -> List.of 
             (
-                new Choice("New Game", c -> sceneManager.switchTo("village_square")),
+                new Choice("New Game", c -> sceneManager.startNewGame()),
                 new Choice("Continue", null, false),
                 new Choice("Options", null, false),
                 new Choice("Quit", c -> System.exit(0))

@@ -51,8 +51,7 @@ public abstract class Character
         if (item == null)
             return "%s has no item to use.".formatted(name);
 
-        // Placeholder hook until Item carriesConsumable effects/stats
-        return "%s uses %s.".formatted(name, item.name());
+        return "%s uses %s. %s".formatted(name, item.name(), item.effect().apply(this));
     }
 
     public boolean tryRun(Character opponent)

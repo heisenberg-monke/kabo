@@ -9,6 +9,7 @@ import hm.kabo.entities.CharacterStats;
 import hm.kabo.entities.EntityManager;
 import hm.kabo.entities.Player;
 import hm.kabo.items.Item;
+import hm.kabo.items.ItemEffect;
 
 public class GameContext 
 {
@@ -21,16 +22,11 @@ public class GameContext
         inventory.computeIfAbsent(item.category(), k -> new ArrayList<>()).add(item);
     }
 
-    public List<Item> getItems(String category)
+    public final void reset()
     {
-        if("All".equalsIgnoreCase(category))
-            return inventory.values().stream().flatMap(List::stream).toList();
+        lookCounter = 0;
 
-        return inventory.getOrDefault(category, List.of());
-    }
-
-    public GameContext()
-    {
+        inventory.clear();
         inventory.put("Equipment", new ArrayList<>());
         inventory.put("Consumables", new ArrayList<>());
         inventory.put("Key Items", new ArrayList<>());
@@ -47,8 +43,9 @@ public class GameContext
         (
             "warm_loaf",
             "Warm Bread Loaf",
-            "Freshly baked sourdough from the village bakery. Smells comforting.",
-            "Consumables"
+            "Freshly baked sourdough from the village bakery. Restores 20 HP.",
+            "Consumables",
+            ItemEffect.heal(20)
         ));
 
         addItem(new Item
@@ -59,6 +56,36 @@ public class GameContext
             "Equipment"
         ));
 
+        entities.reload();
         entities.setPlayer(new Player("player", "Traveler", new CharacterStats(100, 12, 4, 6)));
+    }
+
+    public List<Item> getItems(String category)
+    {
+        if("All".equalsIgnoreCase(category))
+            return inventory.values().stream().flatMap(List::stream).toList();
+
+        return inventory.getOrDefault(category, List.of());
+    }
+
+    public String useItem(Item item)
+    {
+        if (item == null || !item.isUsable())
+            return null;
+
+        var categoryList = inventory.get(item.category());
+        if (categoryList == null || !categoryList.remove(item))
+            return null;
+
+        return entities.getPlayer().useItem(item);
+    }
+
+    public GameContext()
+    {
+        inventory.put("Equipment", new ArrayList<>());
+        inventory.put("Consumables", new ArrayList<>());
+        inventory.put("Key Items", new ArrayList<>());
+
+        reset();
     }
 }

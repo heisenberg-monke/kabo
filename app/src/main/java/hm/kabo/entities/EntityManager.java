@@ -17,10 +17,13 @@ import hm.kabo.entities.enemies.Goblin;
 
 public class EntityManager 
 {
+    private final String resourcePath;
     private Player player;
     private final Map<String, Enemy> entities = new LinkedHashMap<>();
 
-    public EntityManager(String resourcePath) {
+    public EntityManager(String resourcePath) 
+    {
+        this.resourcePath = resourcePath;
         loadEnemiesFromJSON(resourcePath);
     }
 
@@ -64,6 +67,12 @@ public class EntityManager
 
     public void clearEntities() {
         entities.clear();
+    }
+
+    public void reload()
+    {
+        entities.clear();
+        loadEnemiesFromJSON(resourcePath);
     }
 
     private void loadEnemiesFromJSON(String resourcePath)

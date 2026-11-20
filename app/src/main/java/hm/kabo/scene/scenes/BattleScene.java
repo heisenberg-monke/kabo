@@ -24,6 +24,8 @@ public class BattleScene extends Scene
     private final List<String> combatLog = new ArrayList<>();
     private BattleState state = BattleState.PLAYER_TURN;
 
+    private boolean selectingItem = false;
+
     public BattleScene
     (
         String sceneId,
@@ -42,11 +44,21 @@ public class BattleScene extends Scene
         this.sceneManager = sceneManager;
     }
 
+    public void onItemUsed(GameContext context, String resultMessage)
+    {
+        sceneManager.returnToPrevious();
+        executePlayerTurn(context, () -> combatLog.add(resultMessage));
+    }
+
    @Override
     public void onEnter(GameContext context)
     {
+        if (!activeEnemies.isEmpty() && state == BattleState.PLAYER_TURN)
+            return;
+
         activeEnemies.clear();
         combatLog.clear();
+
         state = BattleState.PLAYER_TURN;
 
         for (String id : enemyIds)
@@ -61,8 +73,10 @@ public class BattleScene extends Scene
     }
 
     @Override
-    public void onExit(GameContext context) {
-        activeEnemies.clear();
+    public void onExit(GameContext context) 
+    {
+        if (!selectingItem)
+            activeEnemies.clear();
     }
 
     private List<Enemy> getLivingEnemies() {
@@ -199,25 +213,7 @@ public class BattleScene extends Scene
                 combatLog.add(player.defend())
             )),
 
-            new Choice("Use Item", c -> executePlayerTurn(c, () ->
-            {
-                var consumables = c.getItems("Consumables");
-
-                if (consumables.isEmpty())
-                    combatLog.add("You fumble in your bag, but have no usable items!");
-
-                else
-                {
-                    var item = consumables.get(0);
-
-                    combatLog.add(player.useItem(item));
-
-                    int healed = player.getStats().heal(20);
-
-                    c.inventory.get("Consumables").remove(item);
-                    combatLog.add("Recovered %d HP.".formatted(healed));
-                }
-            })),
+            new Choice("Use Item", c -> sceneManager.openOverlay("inventory"), !context.getItems("Consumables").isEmpty()),
 
             new Choice("Try to Run", c -> executePlayerTurn(c, () ->
             {
