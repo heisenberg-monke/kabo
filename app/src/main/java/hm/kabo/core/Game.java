@@ -11,7 +11,8 @@ public class Game extends Application
     {
         var context = new GameContext();
         var sceneManager = new SceneManager(context, "/scenes.json");
-        var renderer = new Renderer(stage, sceneManager);
+        var inputManager = new InputManager(sceneManager);
+        var renderer = new Renderer(stage, sceneManager, inputManager);
 
         sceneManager.switchTo("title");
         renderer.show();

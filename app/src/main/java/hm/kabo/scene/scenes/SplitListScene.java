@@ -5,9 +5,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import hm.kabo.core.GameContext;
-import hm.kabo.scene.Choice;
 import hm.kabo.scene.Scene;
-import hm.kabo.scene.SceneManager;
 
 public class SplitListScene extends Scene
 {

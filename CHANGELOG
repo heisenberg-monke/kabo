@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.6] - Input System Decoupling
+
+### Added
+* **Dedicated Input Controller (`InputManager`)**
+  * Created `InputManager` to centralize all keyboard and mouse input handling (`KeyEvent` filtering, arrow/tab/numeric navigation, list selection tracking, and button/list click routing).
+  * Moved selection state (`selectedChoiceIndex`, `selectedTabIndex`, and `currentEntries`) out of the UI layer into `InputManager`.
+
+### Changed
+* **Pure Rendering Layer (`Renderer`)**
+  * Refactored `Renderer` to focus strictly on JavaFX layout construction, state-driven view updates, and visual highlighting, delegating all input events to `InputManager`.
+* **Application Initialization (`Game`, `GameContext`)**
+  * Updated `Game.start` to instantiate `InputManager` and inject it into `Renderer`.
+  * Bumped `GameContext.version` to `v0.6`.
+
 ## [v0.5] - Categorized Inventory, Options & Full Keyboard/Mouse Navigation
 
 ### Added

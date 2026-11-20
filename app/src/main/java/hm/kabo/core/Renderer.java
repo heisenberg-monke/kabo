@@ -27,262 +27,16 @@ public class Renderer
 {
     private final Stage stage;
     private final SceneManager sceneManager;
+    private final InputManager inputManager;
     
     private TextArea textArea, itemDescriptionArea;
     private VBox splitContainer;
-    private HBox tabBar;
-    private HBox choiceBox;
+    private HBox tabBar, choiceBox;
     private SplitPane splitView;
     private ListView<String> itemListView;
 
     private final Button[] choiceButtons = new Button[4];
     private Button inventoryButton, optionsButton;
-
-    private int selectedChoiceIndex = 0;
-    private int selectedTabIndex = 0;
-    private List<SplitListScene.ListEntry> currentEntries = List.of();
-
-    private void updateChoiceHighlight(List<Choice> choices)
-    {
-        for(int i = 0; i < 4; ++i)
-        {
-            if(i < choices.size() && i == selectedChoiceIndex && choices.get(i).isEnabled())
-                choiceButtons[i].setStyle("-fx-border-color: #2b7de9; -fx-border-width: 2px; -fx-font-weight: bold;");
-
-            else 
-                choiceButtons[i].setStyle("");
-        }
-    }
-
-    private void renderSplitScene(SplitListScene splitScene)
-    {
-        var tabs = splitScene.getTabs(sceneManager.getContext());
-
-        if (selectedTabIndex < 0 || selectedTabIndex >= tabs.size())
-            selectedTabIndex = 0;
-
-        tabBar.getChildren().clear();
-
-        for(int i = 0; i < tabs.size(); ++i)
-        {
-            final int tabIdx = i;
-            var tabButton = new Button(tabs.get(i).label());
-
-            tabButton.setFocusTraversable(false);
-            tabButton.setOnAction(e -> 
-            {
-                selectedTabIndex = tabIdx;
-                renderSplitScene(splitScene);
-            });
-
-            if(i == selectedTabIndex)
-                tabButton.setStyle("-fx-background-color: #2b7de9; -fx-text-fill: white; -fx-font-weight: bold;");
-
-            else 
-                tabButton.setStyle("");
-
-            tabBar.getChildren().add(tabButton);
-        }
-
-        var hintLabel = new Label("  [Tab / Shift+Tab]");
-
-        hintLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 12px;");
-        tabBar.getChildren().add(hintLabel);
-
-        if(tabs.isEmpty())
-            currentEntries = List.of();
-
-        else 
-            currentEntries = tabs.get(selectedTabIndex).entriesProvider().apply(sceneManager.getContext());
-
-        itemListView.getItems().setAll(
-            currentEntries.stream().map(SplitListScene.ListEntry::label).toList()
-        );
-
-        if(currentEntries.isEmpty())
-            itemDescriptionArea.setText(splitScene.getEmptyMessage());
-
-        else {
-            itemListView.getSelectionModel().select(0);
-            itemDescriptionArea.setText(currentEntries.get(0).description());
-        }
-    }
-
-    private void moveListSelection(int delta)
-    {
-        if(currentEntries.isEmpty())
-            return;
-
-        int current = itemListView.getSelectionModel().getSelectedIndex();
-        int next = Math.floorMod(current + delta, currentEntries.size());
-
-        itemListView.getSelectionModel().select(next);
-        itemListView.scrollTo(next);
-    }
-
-    private void moveChoiceSelection(int delta)
-    {
-        var current = sceneManager.getCurrentScene();
-
-        if(current == null)
-            return;
-
-        var choices = current.getChoices(sceneManager.getContext());
-
-        if(choices.isEmpty())
-            return;
-
-        for(int step = 0; step < choices.size(); ++step)
-        {
-            selectedChoiceIndex = Math.floorMod(selectedChoiceIndex + delta, choices.size());
-
-            if(choices.get(selectedChoiceIndex).isEnabled())
-                break;
-        }
-
-        updateChoiceHighlight(choices);
-    }
-
-    private void moveTabSelection(SplitListScene splitScene, int delta)
-    {
-        var tabs = splitScene.getTabs(sceneManager.getContext());
-
-        if (tabs.isEmpty())
-            return;
-
-        selectedTabIndex = Math.floorMod(selectedTabIndex + delta, tabs.size());
-
-        renderSplitScene(splitScene);
-    }
-
-    private int getChoiceIndexFromKey(KeyCode code)
-    {
-        return switch(code)
-        {
-            case DIGIT1, NUMPAD1 -> 0;
-            case DIGIT2, NUMPAD2 -> 1;
-            case DIGIT3, NUMPAD3 -> 2;
-            case DIGIT4, NUMPAD4 -> 3;
-
-            default -> -1;
-        };
-    }
-
-    private void handleKeyPress(KeyEvent event)
-    {
-        var code = event.getCode();
-
-        if(!sceneManager.isOnTitle())
-        {
-            switch(code)
-            {
-                case I ->
-                {
-                    sceneManager.openOverlay("inventory");
-                    event.consume();
-
-                    return;
-                }
-
-                case ESCAPE ->
-                {
-                    sceneManager.openOverlay("options");
-                    event.consume();
-
-                    return;
-                }
-
-                default -> {}
-            }
-        }
-
-        if(sceneManager.getCurrentScene() instanceof SplitListScene splitScene)
-        {
-            switch(code)
-            {
-                case TAB ->
-                {
-                    int delta = event.isShiftDown() ? -1 : 1;
-
-                    moveTabSelection(splitScene, delta);
-                    event.consume();
-                }
-
-                case UP ->
-                {
-                    moveListSelection(-1);
-                    event.consume();
-                }
-
-                case DOWN ->
-                {
-                    moveListSelection(1);
-                    event.consume();
-                }
-
-                case ENTER, SPACE ->
-                {
-                    activateSelectedEntry();
-                    event.consume();
-                }
-
-                default -> {}
-            }
-
-            return;
-        }
-
-        if(code == KeyCode.LEFT || code == KeyCode.UP)
-        {
-            moveChoiceSelection(-1);
-            event.consume();
-        }
-
-        else if(code == KeyCode.RIGHT || code == KeyCode.DOWN)
-        {
-            moveChoiceSelection(1);
-            event.consume();
-        }
-
-        else if(code == KeyCode.ENTER || code == KeyCode.SPACE)
-        {
-            sceneManager.handleChoice(selectedChoiceIndex);
-            event.consume();
-        }
-
-        else {
-            int numberIndex = getChoiceIndexFromKey(code);
-
-            if(numberIndex != -1)
-            {
-                if(sceneManager.handleChoice(numberIndex))
-                    selectedChoiceIndex = numberIndex;
-
-                event.consume();
-            }
-
-            else if(code == KeyCode.TAB)
-                event.consume();
-        }
-
-        
-    }
-
-    private void activateSelectedEntry()
-    {
-        int idx = itemListView.getSelectionModel().getSelectedIndex();
-
-        if(idx >= 0 && idx < currentEntries.size())
-        {
-            var action = currentEntries.get(idx).onSelect();
-
-            if(action != null)
-            {
-                action.accept(sceneManager.getContext());
-                refresh();
-            }
-        }
-    }
 
     private void buildUI(GameContext context)
     {
@@ -319,17 +73,13 @@ public class Renderer
         itemDescriptionArea.setStyle("-fx-font-size: 15px;");
 
         itemListView.getSelectionModel().selectedIndexProperty().addListener((obs, oldVal, newVal) ->
-        {
-            int idx = newVal.intValue();
-
-            if(idx >= 0 && idx < currentEntries.size())
-                itemDescriptionArea.setText(currentEntries.get(idx).description());
-        });
+            inputManager.onListSelectionChanged(newVal.intValue())
+        );
 
         itemListView.setOnMouseClicked(event ->
         {
             if(event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2)
-                activateSelectedEntry();
+                inputManager.activateSelectedEntry();
         });
 
         splitView.setDividerPositions(0.4);
@@ -352,10 +102,8 @@ public class Renderer
             HBox.setHgrow(choiceButtons[i], Priority.ALWAYS);
 
             choiceButtons[i].setOnAction(e -> 
-            {
-                selectedChoiceIndex = index;
-                sceneManager.handleChoice(index);
-            });
+                inputManager.onChoiceClicked(index)
+            );
 
             choiceBox.getChildren().add(choiceButtons[i]);
         }
@@ -377,7 +125,7 @@ public class Renderer
         root.setCenter(centerStack);
         root.setBottom(bottomContainer);
 
-        fxScene.addEventFilter(KeyEvent.KEY_PRESSED, this::handleKeyPress);
+        inputManager.attach(this, fxScene);
 
         stage.setTitle("KABO - " + context.version);
         stage.setScene(fxScene);
@@ -385,10 +133,103 @@ public class Renderer
         stage.setMinHeight(400);
     }
 
-    public Renderer(Stage stage, SceneManager sceneManager)
+    public void updateChoiceHighlight(List<Choice> choices)
+    {
+        int selectedChoice = inputManager.getSelectedChoiceIndex();
+
+        for(int i = 0; i < 4; ++i)
+        {
+            if(i < choices.size() && i == selectedChoice && choices.get(i).isEnabled())
+                choiceButtons[i].setStyle("-fx-border-color: #2b7de9; -fx-border-width: 2px; -fx-font-weight: bold;");
+
+            else 
+                choiceButtons[i].setStyle("");
+        }
+    }
+
+    public void renderSplitScene(SplitListScene splitScene)
+    {
+        var context = sceneManager.getContext();
+        var tabs = splitScene.getTabs(context);
+        var selectedTab = inputManager.getSelectedTabIndex();
+
+        if(selectedTab < 0 || selectedTab >= tabs.size())
+        {
+            selectedTab = 0;
+            inputManager.selectTab(0);
+
+            return;
+        }
+
+        tabBar.getChildren().clear();
+
+        for (int i = 0; i < tabs.size(); ++i)
+        {
+            final int tabIdx = i;
+            var tabButton = new Button(tabs.get(i).label());
+
+            tabButton.setFocusTraversable(false);
+            tabButton.setOnAction(e -> inputManager.selectTab(tabIdx));
+
+            if (i == selectedTab)
+                tabButton.setStyle("-fx-background-color: #2b7de9; -fx-text-fill: white; -fx-font-weight: bold;");
+
+            else 
+                tabButton.setStyle("");
+
+            tabBar.getChildren().add(tabButton);
+        }
+
+        var hintLabel = new Label("  [Tab / Shift+Tab]");
+
+        var entries = tabs.isEmpty() ? 
+            List.<SplitListScene.ListEntry>of() : 
+            tabs.get(selectedTab).entriesProvider().apply(context);
+
+        hintLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 12px;");
+        tabBar.getChildren().add(hintLabel);
+
+        inputManager.setCurrEntries(entries);
+
+        itemListView.getItems().setAll(
+            entries.stream().map(SplitListScene.ListEntry::label).toList()
+        );
+
+        if (entries.isEmpty())
+            itemDescriptionArea.setText(splitScene.getEmptyMessage());
+
+        else
+        {
+            itemListView.getSelectionModel().select(0);
+            itemDescriptionArea.setText(entries.get(0).description());
+        }
+    }
+
+    public int getSelectedListIndex() {
+        return itemListView.getSelectionModel().getSelectedIndex();
+    }
+
+    public void selectListIndex(int index)
+    {
+        itemListView.getSelectionModel().select(index);
+        itemListView.scrollTo(index);
+    }
+
+    public void setItemDescription(String description) {
+        itemDescriptionArea.setText(description);
+    }
+
+    public void refreshSplitView()
+    {
+        if (sceneManager.getCurrentScene() instanceof SplitListScene splitScene)
+            renderSplitScene(splitScene);
+    }
+
+    public Renderer(Stage stage, SceneManager sceneManager, InputManager inputManager)
     {
         this.stage = stage;
         this.sceneManager = sceneManager;
+        this.inputManager = inputManager;
 
         sceneManager.setRenderer(this);
         buildUI(sceneManager.getContext());
@@ -409,16 +250,18 @@ public class Renderer
         inventoryButton.setDisable(onTitle);
         optionsButton.setDisable(onTitle);
 
+        inputManager.resetSelectionForScene();
+
         if(current instanceof SplitListScene splitScene)
         {
             textArea.setVisible(false);
             splitContainer.setVisible(true);
 
-            selectedTabIndex = 0;
             renderSplitScene(splitScene);
         }
 
-        else {
+        else 
+        {
             splitContainer.setVisible(false);
             textArea.setVisible(true);
             textArea.setText(current.getText(context));
@@ -426,17 +269,6 @@ public class Renderer
 
         choiceBox.setVisible(hashChoices);
         choiceBox.setManaged(hashChoices);
-
-        selectedChoiceIndex = 0;
-
-        for (int i = 0; i < choices.size(); i++) 
-        {
-            if (choices.get(i).isEnabled()) 
-            {
-                selectedChoiceIndex = i;
-                break;
-            }
-        }
 
         for(int i = 0; i < 4; ++i)
         {
@@ -449,7 +281,8 @@ public class Renderer
                 choiceButtons[i].setVisible(true);
             }
 
-            else {
+            else 
+            {
                 choiceButtons[i].setText("");
                 choiceButtons[i].setDisable(true);
                 choiceButtons[i].setVisible(false);

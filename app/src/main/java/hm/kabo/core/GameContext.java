@@ -10,7 +10,7 @@ import hm.kabo.items.Item;
 public class GameContext 
 {
     public int lookCounter = 0;
-    public final String version = "v0.5";
+    public final String version = "v0.6";
     public final Map<String, List<Item>> inventory = new LinkedHashMap<>();
 
     public void addItem(Item item) {
