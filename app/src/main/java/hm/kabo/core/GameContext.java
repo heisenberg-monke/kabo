@@ -14,7 +14,7 @@ import hm.kabo.items.ItemEffect;
 public class GameContext 
 {
     public int lookCounter = 0;
-    public final String version = "v0.6";
+    public final String version = "v0.8";
     public final Map<String, List<Item>> inventory = new LinkedHashMap<>();
     public final EntityManager entities = new EntityManager("/enemies.json");
 
