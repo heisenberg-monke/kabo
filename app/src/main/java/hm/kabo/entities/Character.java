@@ -5,6 +5,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import com.google.common.math.Stats;
 
 import hm.kabo.items.Item;
+import hm.kabo.items.ItemEffect;
 
 public abstract class Character 
 {
@@ -44,14 +45,17 @@ public abstract class Character
         return "%s raises their guard and prepares to defend.".formatted(name);
     }
 
-    public String useItem(Item item)
+    public ItemEffect.EffectResult useItem(Item item)
     {
+        if (item == null || !item.isUsable())
+            return new ItemEffect.EffectResult(false, "%s cannot use this item.".formatted(name));
+
+        var result = item.effect().apply(this);
+        if (!result.applied())
+            return result;
+
         onTurnStart();
-
-        if (item == null)
-            return "%s has no item to use.".formatted(name);
-
-        return "%s uses %s. %s".formatted(name, item.name(), item.effect().apply(this));
+        return new ItemEffect.EffectResult(true, "%s uses %s. %s".formatted(name, item.name(), result.message()));
     }
 
     public boolean tryRun(Character opponent)

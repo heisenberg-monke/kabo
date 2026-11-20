@@ -192,7 +192,7 @@ public class InputManager
             return;
         }
 
-        if(!sceneManager.isOnTitle() && !sceneManager.isConfirmationActive())
+        if(!sceneManager.isInTitleContext() && !sceneManager.isConfirmationActive())
         {
             switch(code)
             {

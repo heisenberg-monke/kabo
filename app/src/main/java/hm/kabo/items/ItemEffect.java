@@ -3,12 +3,14 @@ package hm.kabo.items;
 import hm.kabo.entities.Character;
 
 @FunctionalInterface
-public interface ItemEffect 
+public interface ItemEffect
 {
-    String apply(Character target);
+    record EffectResult(boolean applied, String message) {}
+
+    EffectResult apply(Character target);
 
     static ItemEffect none() {
-        return target -> target.getName() + " cannot use this item right now.";
+        return target -> new EffectResult(false, target.getName() + " cannot use this item right now.");
     }
 
     static ItemEffect heal(int amount)
@@ -16,7 +18,10 @@ public interface ItemEffect
         return target ->
         {
             int healed = target.getStats().heal(amount);
-            return "%s recovers %d HP!".formatted(target.getName(), healed);
+            if (healed <= 0)
+                return new EffectResult(false, "%s is already at full HP!".formatted(target.getName()));
+
+            return new EffectResult(true, "%s recovers %d HP!".formatted(target.getName(), healed));
         };
     }
 
@@ -25,7 +30,7 @@ public interface ItemEffect
         return target ->
         {
             target.getStats().setAttack(target.getStats().getAttack() + bonus);
-            return "%s's attack increases by %d!".formatted(target.getName(), bonus);
+            return new EffectResult(true, "%s's attack increases by %d!".formatted(target.getName(), bonus));
         };
     }
 
@@ -34,7 +39,7 @@ public interface ItemEffect
         return target ->
         {
             target.getStats().setDefense(target.getStats().getDefense() + bonus);
-            return "%s's defense increases by %d!".formatted(target.getName(), bonus);
+            return new EffectResult(true, "%s's defense increases by %d!".formatted(target.getName(), bonus));
         };
     }
 }

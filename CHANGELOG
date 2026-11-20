@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.9.1] - Item Consumption Validation & Title Overlay Input Guards
+
+### Fixed
+* **Prevented Unusable Items from Being Consumed (`ItemEffect`, `Character`, `GameContext`, `SceneManager`)**
+  * Introduced `ItemEffect.EffectResult(boolean applied, String message)` so item effects explicitly report whether they took effect (e.g., returning `applied = false` when attempting to heal at full HP).
+  * Updated `Character.useItem` and `GameContext.useItem` to remove an item from `inventory` only when `result.applied()` is `true`.
+  * Updated out-of-battle and in-battle inventory callbacks in `SceneManager` so failed item uses display feedback without deleting the item or wasting the player's combat turn.
+* **Blocked Inventory Access from Title Screen Overlays (`SceneManager`, `InputManager`, `Renderer`)**
+  * Added `SceneManager.isInTitleContext()` to detect both the title screen itself and overlays opened from it (`Options` and `Continue / Load Game`).
+  * Updated `InputManager` and `Renderer` to guard the `I` shortcut and `Inventory` button using `isInTitleContext()`, preventing players from opening the inventory while in `Title Screen -> Options`.
+
+### Changed
+* Bumped `GameContext.version` to `v0.9.1`.
+
 ## [v0.9] - Encrypted Save/Load System, Confirmation Prompts & World Expansion
 
 ### Added

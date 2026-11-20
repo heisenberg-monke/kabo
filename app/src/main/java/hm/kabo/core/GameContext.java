@@ -14,7 +14,7 @@ import hm.kabo.items.ItemEffect;
 public class GameContext 
 {
     public int lookCounter = 0;
-    public final String version = "v0.9";
+    public final String version = "v0.9.1";
     public final Map<String, List<Item>> inventory = new LinkedHashMap<>();
     public final EntityManager entities = new EntityManager("/enemies.json");
     private final Map<String, Item> itemTemplates = new LinkedHashMap<>();
@@ -64,16 +64,20 @@ public class GameContext
         return inventory.getOrDefault(category, List.of());
     }
 
-    public String useItem(Item item)
+    public ItemEffect.EffectResult useItem(Item item)
     {
         if (item == null || !item.isUsable())
-            return null;
+            return new ItemEffect.EffectResult(false, "This item cannot be used.");
 
         var categoryList = inventory.get(item.category());
-        if (categoryList == null || !categoryList.remove(item))
-            return null;
+        if (categoryList == null || !categoryList.contains(item))
+            return new ItemEffect.EffectResult(false, "Item not found in inventory.");
 
-        return entities.getPlayer().useItem(item);
+        var result = entities.getPlayer().useItem(item);
+        if (result.applied())
+            categoryList.remove(item);
+
+        return result;
     }
 
     public GameContext()

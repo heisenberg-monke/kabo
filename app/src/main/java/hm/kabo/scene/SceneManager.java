@@ -121,11 +121,21 @@ public class SceneManager
             item.description(),
             item.isUsable() ? gameCtx ->
             {
-                String result = gameCtx.useItem(item);
-                if (result != null && renderer != null)
-                    renderer.setItemDescription(result);
+                var result = gameCtx.useItem(item);
+                if (renderer != null)
+                {
+                    if (result.applied())
+                        renderer.refreshSplitView();
+                    renderer.setItemDescription(result.message());
+                }
             } : null
         );
+    }
+
+    public boolean isInTitleContext()
+    {
+        var title = sceneCache.get("title");
+        return currentScene == title || (isOverlayActive() && previousScene == title);
     }
 
     public void confirmQuit(String cancelSceneId)
@@ -163,9 +173,11 @@ public class SceneManager
                             item.description(),
                             gameCtx ->
                             {
-                                String result = gameCtx.useItem(item);
-                                if (result != null)
-                                    battle.onItemUsed(gameCtx, result);
+                                var result = gameCtx.useItem(item);
+                                if (result.applied())
+                                    battle.onItemUsed(gameCtx, result.message());
+                                else if (renderer != null)
+                                    renderer.setItemDescription(result.message());
                             }
                         )).toList()
                     ));

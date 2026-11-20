@@ -243,7 +243,7 @@ public class Renderer
         var choices = current.getChoices(context);
         var onTitle = sceneManager.isOnTitle();
         var hashChoices = !choices.isEmpty();
-        boolean showUtilityBox = !onTitle && !sceneManager.isConfirmationActive();
+        boolean showUtilityBox = !sceneManager.isInTitleContext() && !sceneManager.isConfirmationActive();
 
         utilityBox.setVisible(showUtilityBox);
         utilityBox.setManaged(showUtilityBox);
