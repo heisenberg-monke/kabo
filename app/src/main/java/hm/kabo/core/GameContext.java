@@ -5,6 +5,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import hm.kabo.entities.CharacterStats;
+import hm.kabo.entities.EntityManager;
+import hm.kabo.entities.Player;
 import hm.kabo.items.Item;
 
 public class GameContext 
@@ -12,6 +15,7 @@ public class GameContext
     public int lookCounter = 0;
     public final String version = "v0.6";
     public final Map<String, List<Item>> inventory = new LinkedHashMap<>();
+    public final EntityManager entities = new EntityManager("/enemies.json");
 
     public void addItem(Item item) {
         inventory.computeIfAbsent(item.category(), k -> new ArrayList<>()).add(item);
@@ -54,5 +58,7 @@ public class GameContext
             "A sturdy wool tunic patched at the elbows. Offers modest warmth.",
             "Equipment"
         ));
+
+        entities.setPlayer(new Player("player", "Traveler", new CharacterStats(100, 12, 4, 6)));
     }
 }

@@ -5,7 +5,10 @@ import java.util.List;
 public record SceneData
 (
     String id,
+    String type,
     String text,
+    List<String> enemyIds,
+    String targetScene,
     List<ChoiceData> choices
 ) 
 {

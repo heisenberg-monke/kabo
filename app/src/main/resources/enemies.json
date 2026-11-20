@@ -1,0 +1,30 @@
+[
+  {
+    "type": "GOBLIN",
+    "id": "goblin_scout",
+    "name": "Forest Goblin",
+    "stats": {
+      "maxHP": 30,
+      "hp": 30,
+      "attack": 8,
+      "defense": 2,
+      "speed": 7
+    },
+    "xpReward": 15,
+    "goldReward": 8
+  },
+  {
+    "type": "GOBLIN",
+    "id": "goblin_brute",
+    "name": "Goblin Brute",
+    "stats": {
+      "maxHP": 45,
+      "hp": 45,
+      "attack": 11,
+      "defense": 4,
+      "speed": 4
+    },
+    "xpReward": 25,
+    "goldReward": 15
+  }
+]

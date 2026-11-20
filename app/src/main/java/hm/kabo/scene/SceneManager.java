@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 
 import hm.kabo.core.GameContext;
 import hm.kabo.core.Renderer;
+import hm.kabo.scene.scenes.BattleScene;
 import hm.kabo.scene.scenes.ExplorationScene;
 import hm.kabo.scene.scenes.SplitListScene;
 import hm.kabo.scene.scenes.TitleScene;
@@ -68,15 +69,40 @@ public class SceneManager
 
             for(var data : scenes)
             {
-                var choices = data.choices().stream().map(this::buildChoice).toList();
+                if("BATTLE".equalsIgnoreCase(data.type()))
+                    registerScene(data.id(), new BattleScene
+                    (
+                        data.id(),
+                        data.text(),
+                        data.enemyIds(),
+                        data.targetScene(),
+                        this
+                    ));
 
-                registerScene(data.id(), new ExplorationScene(c -> formatText(data.text(), c), c -> choices));
+                else
+                {
+                    var choices = data.choices() == null
+                        ? List.<Choice>of()
+                        : data.choices().stream().map(this::buildChoice).toList();
+
+                    registerScene(data.id(), new ExplorationScene(c -> formatText(data.text(), c), c -> choices));
+                }
             }
         }
         
         catch(Exception e) {
             throw new RuntimeException("Failed to load scenes from " + resourcePath, e);
         }
+    }
+
+    public void replaceScene(String oldId, String replacementId)
+    {
+        var replacement = sceneCache.get(replacementId);
+
+        if (replacement == null)
+            throw new IllegalArgumentException("No replacement scene registered with ID: " + replacementId);
+
+        sceneCache.put(oldId, replacement);
     }
 
     private void registerScenes(String resourcePath)
@@ -156,6 +182,9 @@ public class SceneManager
 
         if (scene == sceneCache.get("title"))
             previousScene = null;
+
+        else if (scene instanceof BattleScene && currentScene != null && !(currentScene instanceof SplitListScene))
+            previousScene = currentScene;
 
         currentScene = scene;
 

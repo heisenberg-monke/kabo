@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.7] - Entity Hierarchy & Turn-Based Combat System
+
+### Added
+* **Core Entity Architecture (`Character`, `CharacterStats`, `Player`, `Enemy`, `Goblin`)**
+  * Created `CharacterStats` to manage `maxHP`, `hp`, `attack`, `defense`, and `speed` with damage mitigation, healing clamping, and HP restoration.
+  * Implemented abstract `Character` base class with core combat actions (`attack`, `defend`, `useItem`, and speed-scaled `tryRun`).
+  * Added `Player` (tracking `xp` and `gold`) and abstract `Enemy` (with reward fields and default AI `takeTurn` logic), alongside concrete `Goblin` enemy implementation.
+* **Entity Registry (`EntityManager` & `enemies.json`)**
+  * Created `EntityManager` to manage the `Player` reference separately and load concrete `Enemy` instances from `/enemies.json` into a lookup map via custom GSON deserialization.
+* **Turn-Based Combat Encounters (`BattleScene`)**
+  * Added `BattleScene` to alternate between player choices (`Attack`, `Defend`, `Use Item`, `Try to Run`) and sequential enemy turns until combat resolves.
+  * Implemented persistent encounter resolution: defeating all enemies removes them from `EntityManager`, awards XP/gold, and replaces the defeated `BattleScene` with its `targetScene` in `SceneManager`, while escaping returns to the previous scene.
+* **World Progression (`scenes.json`)**
+  * Added the `eastern_woods_ambush` battle encounter and `eastern_woods` exploration scene, routing progression from `village_square`.
+
+### Changed
+* **Data-Driven Scene Loading (`SceneData`, `SceneManager`, `GameContext`)**
+  * Extended `SceneData` and `SceneManager` to parse `"BATTLE"` scenes with `enemyIds` and `targetScene` fields, added `SceneManager.replaceScene`, and preserved `previousScene` on battle entry.
+  * Initialized `EntityManager` and the default `Player` inside `GameContext`, and bumped `GameContext.version` to `v0.7`.
+
 ## [v0.6] - Input System Decoupling
 
 ### Added
